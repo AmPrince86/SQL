@@ -1,8 +1,8 @@
 --Create a retail store database
 
-CREATE TABLE Ambs_Store (Id INTEGER, Items TEXT, color TEXT, Price INTEGER, Quantity INTEGER);
+CREATE TABLE Nadia_Store (Id INTEGER, Items TEXT, color TEXT, Price INTEGER, Quantity INTEGER);
 
-INSERT INTO Ambs_Store VALUES 
+INSERT INTO Nadia_Store VALUES 
 (1, "shirt", "purple", 12.99, 4),
 (2, "pants", "blue", 21.99,35),
 (3, "socks", "black", 20.99, 12),
@@ -12,13 +12,13 @@ INSERT INTO Ambs_Store VALUES
 
 --display all rows
 SELECT *
-FROM Ambs_Store;
+FROM Nadia_Store;
 
 --display the database ordered by price
 SELECT *
-FROM Ambs_Store
+FROM Nadia_Store
 ORDER BY Price;
 
 -What is the total amount of all the items being sold?
 SELECT SUM(Price)
-FROM Ambs_Store;
+FROM Nadia_Store;
