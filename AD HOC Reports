@@ -1,0 +1,325 @@
+-- filtering Toastmaster events
+SELECT 
+    COUNT(*)
+FROM
+    event
+WHERE
+    description LIKE '%Toastmaster%'
+        OR description LIKE '%toastmaster%';
+
+-- Cities where Toastmaster events occur
+SELECT 
+    event_name, city
+FROM
+    city AS cty
+        LEFT JOIN
+    grp ON cty.city_id = grp.city_id
+        JOIN
+    event AS eve ON grp.group_id = eve.group_id
+WHERE
+    eve.description LIKE '%Toastmaster%'
+        OR eve.description LIKE '%toastmaster%';
+
+-- Toastmaster events in each city
+SELECT 
+    cty.city, COUNT(eve.event_name)
+FROM
+    city AS cty
+        LEFT JOIN
+    grp ON cty.city_id = grp.city_id
+        JOIN
+    event AS eve ON grp.group_id = eve.group_id
+WHERE
+    eve.description LIKE '%Toastmaster%'
+        OR eve.description LIKE '%toastmaster%'
+GROUP BY cty.city;
+
+-- members joined LetsMeet year by year 
+SELECT 
+    YEAR(joined) AS year_joined, COUNT(*) AS members
+FROM
+    grp_member
+WHERE
+    YEAR(joined) >= (SELECT 
+            YEAR(MIN(joined))
+        FROM
+            grp_member)
+GROUP BY year_joined
+ORDER BY year_joined;
+    
+-- rename smaller cities to larger city 
+-- OFF
+SET SQL_SAFE_UPDATES=0;
+-- ON
+SET SQL_SAFE_UPDATES=1;
+
+UPDATE grp_member 
+SET 
+    city = 'Chicago'
+WHERE
+    city IN ('East Chicago' , 'West Chicago',
+        'North Chicago',
+        'Chicago Heights',
+        'Chicago Ridge',
+        'Chicago');
+
+UPDATE grp_member 
+SET 
+    city = 'San Francisco'
+WHERE
+    city IN ('San Francisco' , 'South San Francisco');
+
+UPDATE grp_member 
+SET 
+    city = 'New York'
+WHERE
+    city IN ('New York' , 'West New York');
+    
+SELECT DISTINCT
+    city
+FROM
+    grp_member;
+
+-- show annual growth for each city
+SELECT 
+    YEAR(joined) AS year_joined, COUNT(*) AS members
+FROM
+    grp_member
+WHERE
+    city = 'Chicago'
+GROUP BY year_joined
+ORDER BY year_joined;
+
+SELECT 
+    YEAR(joined) AS year_joined, COUNT(*) AS members
+FROM
+    grp_member
+WHERE
+    city = 'New York'
+GROUP BY year_joined
+ORDER BY year_joined;
+
+SELECT 
+    YEAR(joined) AS year_joined, COUNT(*) AS members
+FROM
+    grp_member
+WHERE
+    city = 'San Francisco'
+GROUP BY year_joined
+ORDER BY year_joined;
+
+-- month to month 2017 membership growth
+SELECT 
+    MONTH(joined) AS month, COUNT(*) AS members_joined
+FROM
+    grp_member
+WHERE
+    joined LIKE '%2017%'
+GROUP BY month
+ORDER BY month;
+
+-- month to month 2016 membership growth
+SELECT 
+    MONTH(joined) AS month, COUNT(*) AS members_joined
+FROM
+    grp_member
+WHERE
+    joined LIKE '%2016%'
+GROUP BY month
+ORDER BY month;
+
+-- break down of ratings
+SELECT 
+    SUM(CASE
+        WHEN rating = 0.00 THEN 1
+        ELSE 0
+    END) zero_rating,
+    SUM(CASE
+        WHEN rating BETWEEN 1.00 AND 1.99 THEN 1
+        ELSE 0
+    END) one_rating,
+    SUM(CASE
+        WHEN rating BETWEEN 2.00 AND 2.99 THEN 1
+        ELSE 0
+    END) two_ratings,
+    SUM(CASE
+        WHEN rating BETWEEN 3.00 AND 3.99 THEN 1
+        ELSE 0
+    END) three_ratings,
+    SUM(CASE
+        WHEN rating BETWEEN 4.00 AND 4.99 THEN 1
+        ELSE 0
+    END) four_ratings,
+    SUM(CASE
+        WHEN rating >= 5.00 THEN 1
+        ELSE 0
+    END) five_ratings
+FROM
+    grp;
+
+SELECT 
+    group_name,
+    CASE
+        WHEN rating = 0.00 THEN 0
+        WHEN rating BETWEEN 1.00 AND 1.99 THEN 1
+        WHEN rating BETWEEN 2.00 AND 2.99 THEN 2
+        WHEN rating BETWEEN 3.00 AND 3.99 THEN 3
+        WHEN rating BETWEEN 4.00 AND 4.99 THEN 4
+        WHEN rating >= 5.00 THEN 5
+    END AS ratings
+FROM
+    grp
+ORDER BY ratings DESC;
+    
+-- number of members in each group with rating of 5
+SELECT 
+    group_name,
+    members,
+    CASE
+        WHEN rating = 0.00 THEN 0
+        WHEN rating BETWEEN 1.00 AND 1.99 THEN 1
+        WHEN rating BETWEEN 2.00 AND 2.99 THEN 2
+        WHEN rating BETWEEN 3.00 AND 3.99 THEN 3
+        WHEN rating BETWEEN 4.00 AND 4.99 THEN 4
+        WHEN rating >= 5.00 THEN 5
+    END AS ratings
+FROM
+    grp
+HAVING ratings = 5
+ORDER BY members DESC;
+
+-- number of members in each group, city, rating of 5 and category
+SELECT 
+    group_name,
+    members,
+    city,
+    category_name,
+    CASE
+        WHEN rating = 0.00 THEN 0
+        WHEN rating BETWEEN 1.00 AND 1.99 THEN 1
+        WHEN rating BETWEEN 2.00 AND 2.99 THEN 2
+        WHEN rating BETWEEN 3.00 AND 3.99 THEN 3
+        WHEN rating BETWEEN 4.00 AND 4.99 THEN 4
+        WHEN rating >= 5.00 THEN 5
+    END AS ratings
+FROM
+    grp
+        LEFT JOIN
+    city ON grp.city_id = city.city_id
+        JOIN
+    category AS cat ON grp.category_id = cat.category_id
+WHERE
+    city LIKE '%New York%'
+HAVING ratings = 5
+ORDER BY members DESC;
+
+SELECT 
+    group_name,
+    members,
+    city,
+    category_name,
+    CASE
+        WHEN rating = 0.00 THEN 0
+        WHEN rating BETWEEN 1.00 AND 1.99 THEN 1
+        WHEN rating BETWEEN 2.00 AND 2.99 THEN 2
+        WHEN rating BETWEEN 3.00 AND 3.99 THEN 3
+        WHEN rating BETWEEN 4.00 AND 4.99 THEN 4
+        WHEN rating >= 5.00 THEN 5
+    END AS ratings
+FROM
+    grp
+        LEFT JOIN
+    city ON grp.city_id = city.city_id
+        JOIN
+    category AS cat ON grp.category_id = cat.category_id
+WHERE
+    city LIKE '%Chicago%'
+HAVING ratings = 5
+ORDER BY members DESC;
+
+SELECT 
+    group_name,
+    members,
+    city,
+    category_name,
+    CASE
+        WHEN rating = 0.00 THEN 0
+        WHEN rating BETWEEN 1.00 AND 1.99 THEN 1
+        WHEN rating BETWEEN 2.00 AND 2.99 THEN 2
+        WHEN rating BETWEEN 3.00 AND 3.99 THEN 3
+        WHEN rating BETWEEN 4.00 AND 4.99 THEN 4
+        WHEN rating >= 5.00 THEN 5
+    END AS ratings
+FROM
+    grp
+        LEFT JOIN
+    city ON grp.city_id = city.city_id
+        JOIN
+    category AS cat ON grp.category_id = cat.category_id
+WHERE
+    city LIKE '%San Francisco%'
+HAVING ratings = 5
+ORDER BY members DESC;
+
+-- category ranks
+SELECT 
+    category_name, COUNT(category_name)
+FROM
+    grp
+        JOIN
+    category AS cat ON grp.category_id = cat.category_id
+GROUP BY category_name
+ORDER BY COUNT(category_name) DESC;
+
+-- Summary of Findings
+
+-- 1. How many Toastmasters events are there using LetsMeet in New York, Chicago and San Francisco?
+
+/*
+- There are a total of 675 Toastmaster events on LetsMeet.
+- San Francisco has 11 events.
+- New York has 124 events.
+- Chicago has 540 events.
+*/
+
+-- 2. Is LetsMeet membership leveling off?
+
+/*
+- In 2015, 4954 more members joined from the previous year, making it the highest increase of members joining LetsMeet.
+- The following year an increase of about half joined between 2015 to 2016 with 2287 members.
+- A decline of growth appears between 2016 to 2017 with a 510 member join increase.
+- In 2017 membership numbers were the lowest in the months of November with 240 members and December with 13 members. This is significantly lower compared to the rest of the year. This could be due to the holiday seasons.
+- Looking at the previous year 2016, there is a similiar pattern with lower numbers of members joining in the months of November and December.
+*/
+
+-- 3. What five groups should marketing feature in their upcoming campaign?*
+
+-- Recommendations of groups for upcoming campagign
+
+/*
+-New York
+	- NYC Art Meetup
+		- They have the most members with a total of 9082 members.
+        - A high rating of 5.
+		- Their group is in the Art & Culture category, which has 160 groups, a popular category.
+	- Entrepreneur Mastery Mentoring Meetup
+		- They have a significant amount of members with a total of 2326.
+        - A high rating of 5.
+        - Their group is in the Career & Business category which has 790 groups, a popular category.
+	- New Moms Social Circle
+		- They have a significant amount of members with a total of 1603.
+        - A high rating of 5.
+        -  Their group is in the Parents & Family category which has 70 groups, a least popular category.
+-Chicago
+	- Sunday Morning Run and Brunch
+		- They have a significant amount of members with a total of 1381.
+        - A high rating of 5.
+        - Their group is in the Fitness category which has 80 groups, a least popular category.
+-San Francisco
+	- Sketch & Design
+		- They have a significant amount of members with a total of 2255.
+        - A high rating of 5.
+        - Their group is in the Tech category which has 911 groups, making it the most popular category.
+        
+- Base on the data, each group has high ratings, a significant number of members and represents a different category which brings diversity to the campaign.
+*/
