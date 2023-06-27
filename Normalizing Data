@@ -1,0 +1,100 @@
+--This SQL project involves normalizing the LetsMeetData by removing redundant columns. Normalization helps eliminate data duplication and improve data integrity, resulting in a more
+efficient and organized database structure for managing meeting-related information.
+
+-- Eliminate Redundant Columns
+SELECT 
+    *
+FROM
+    venue_
+LIMIT 5;
+
+ALTER TABLE venue_
+DROP COLUMN `RAND()`,
+DROP COLUMN localized_country_name,
+DROP COLUMN phone;
+
+/*RAND() is a function that returns random numbers, this column has no use in the venue_ table. Localized_coutry_name is a duplicate of country column. Phone column the values are incomplete.*/
+
+SELECT 
+    *
+FROM
+    city
+LIMIT 5;
+
+ALTER TABLE city
+DROP COLUMN localized_country_name,
+DROP COLUMN distance,
+DROP COLUMN country;
+
+/*Removing localized_country_name column and country column, they're redundant and they're also located in other tables.
+Distance column is uninformative in the city table.*/
+
+SELECT 
+    *
+FROM
+    event
+LIMIT 5;
+
+ALTER TABLE event
+DROP COLUMN headcount,
+DROP COLUMN why;
+
+/*Removing headcount column because it's uninformative, most values are zero. Why column is uninformative as well and most values are null*/
+
+SELECT 
+    *
+FROM
+    category
+LIMIT 5;
+
+ALTER TABLE category
+DROP COLUMN shortname,
+DROP COLUMN sort_name;
+
+/*Removing shortname and sort_name columns, both columns are redundant to one another, category_name displays the same names from both columns.*/
+
+-- 3 Split grp_member table
+SELECT 
+    *
+FROM
+    grp_member
+LIMIT 5;
+
+-- A  Creating new table called group_sign_ups
+CREATE TABLE group_sign_ups AS SELECT DISTINCT group_id, member_id, joined FROM
+    grp_member;
+
+SELECT
+	*
+FROM 
+	group_sign_ups
+LIMIT 5;
+
+-- B Creating new table called members
+CREATE TABLE members AS SELECT DISTINCT member_id, member_name, city, hometown, member_status FROM
+    grp_member;
+
+SELECT 
+    *
+FROM
+    members
+LIMIT 5;
+
+-- C PRIMARY KEY
+ALTER TABLE members
+ADD PRIMARY KEY(member_id);
+
+DESCRIBE members;
+
+-- D FOREIGN KEY
+ALTER TABLE group_sign_ups
+ADD FOREIGN KEY(member_id) REFERENCES members (member_id);
+
+DESCRIBE group_sign_ups;
+
+ALTER TABLE group_sign_ups
+ADD FOREIGN KEY(group_id) REFERENCES grp (group_id);
+
+-- E DROP grp_member table
+DROP TABLE grp_member;   
+    
