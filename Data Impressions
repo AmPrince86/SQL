@@ -1,0 +1,192 @@
+-- In this project, real data is analyzed using various SQL queries such as WHERE, GROUP BY, and JOIN. These queries help answer questions and uncover important insights during the exploratory data analysis process. 
+
+-- Active Cities
+-- 1
+SELECT 
+    cty.city
+FROM
+    city AS cty
+        INNER JOIN
+    grp ON cty.city_id = grp.city_id
+        INNER JOIN
+    grp_member gpm ON grp.group_id = gpm.group_id
+WHERE
+    gpm.member_status = 'active'
+GROUP BY cty.city;
+
+ -- 2
+SELECT 
+    cty.city, member_status
+FROM
+    city AS cty
+        JOIN
+    grp ON cty.city_id = grp.city_id
+        INNER JOIN
+    grp_member gpm ON grp.group_id = gpm.group_id
+WHERE
+    gpm.member_status <> 'active'
+GROUP BY cty.city;
+
+/* What cities have active members?
+	-The cities that have active members are Chicago, San Francisco, New York.*/
+/* Are there any cities listed in the city table with no active members? If so, what state are those cities in? 
+	-There aren't any cities with no active members but there are members with prereg(pre-registered) status.
+    - The cities with prereg member status are New York, San Francisco and Chicago.*/
+
+-- Groups
+SELECT 
+    join_mode AS status, COUNT(join_mode) AS count
+FROM
+    grp
+GROUP BY join_mode;
+
+/*How many groups are currently open, waiting for approval, and/or closed? 
+	-There are 3602 open groups, 723 waiting for approval and 15 that are closed.*/
+
+-- Categories
+SELECT 
+    category_name, COUNT(category_name) AS total_groups
+FROM
+    category AS cat
+        INNER JOIN
+    grp ON cat.category_id = grp.category_id
+GROUP BY category_name
+ORDER BY total_groups DESC
+LIMIT 5;
+
+SELECT 
+    category_name, COUNT(category_name) AS total_groups
+FROM
+    category AS cat
+        INNER JOIN
+    grp ON cat.category_id = grp.category_id
+GROUP BY category_name
+ORDER BY total_groups ASC
+LIMIT 5;
+
+/*What are the five categories that contain the most groups? 
+   What are the five categories that contain the least number of groups?
+	-Five categories that contain the most groups are Tech with 911, Career & Business 790, Socializing 320, Health & Wellbeing 218, Language & Ethnic Identity 166.
+    -Five categories that contain the least groups are Paranormal with 4, Cars & Motorcycles 15, Sci_Fi & Fantasy 16, Lifestyle 26, Hobbies & Crafts.*/
+
+-- Members
+-- 1
+SELECT 
+    COUNT(member_id) AS mem_join
+FROM
+    grp_member;
+
+-- 2
+SELECT 
+    ((SELECT 
+            COUNT(member_id)
+        FROM
+            grp_member
+        WHERE
+            city = 'Chicago') / (SELECT 
+            COUNT(member_id)
+        FROM
+            grp_member)) * 100 AS chicago_members;
+
+/*How many members are there?
+  What percentage of members are in Chicago?
+	- There are a total of 43,470 members that have joined LetsMeet so far.
+    - 21% of members are in the city of Chicago.*/
+
+-- venue_
+SELECT 
+    city, COUNT(venue_id) AS venues
+FROM
+    venue_
+GROUP BY city
+ORDER BY venues DESC
+LIMIT 1;
+
+SELECT 
+    city, COUNT(member_id) AS members
+FROM
+    grp_member
+WHERE
+    city = 'New York'
+GROUP BY city
+ORDER BY members DESC;
+
+/*New York has the most venues out of Chicago and San Francisco with a total of 518 venues. New York also has the most members with 23,190. Just to name a few groups, Starbucks Coffee, Herald Square Market, Regale Deli Mullens's Pub and East-West Yoga Studios. Members can choose from coffee shops to pubs to yoga studios, giving them more options to choose from.*/
+
+-- grp
+SELECT 
+    *
+FROM
+    grp
+ORDER BY created ASC
+LIMIT 1;
+
+/*The longest running group is New York City Poker Group was created on 10/8/2002. Their status is open but public_limited. New York City Poker Group also has a rating of 3.84 out of 5 The group has 1797 members, which is not the biggest group in LetsMeet groups.*/
+
+-- grp_member
+SELECT 
+    COUNT(member_id) AS members
+FROM
+    grp_member;
+
+SELECT 
+    member_id, member_name, joined
+FROM
+    grp_member
+LIMIT 2 OFFSET 15;
+
+/*grp_member's table doesn't give an accurate number of members in LetsMeet. Here's why, in member_id column the values are duplicates. Row 16 and 17 have the same value 66265 both members are named Nick. It is a possibly of these rows being duplicates. While observing the joined column, members named Nick joined on different dates 6/29/2017 and 9/1/2015. This could be an error or two different Nicks joined at different times. This could also mean the member Nick joined and left in 2015 and rejoined in 2017. If the member_name column stated the last name of each member, this could narrow down the possibilities.*/
+
+-- city
+SELECT 
+    *
+FROM
+    city
+ORDER BY ranking;
+
+/*Ranking column might be determined by the most pouplar cities with LetsMeet members. This column isn't providing additional information, it's only located in one table. New York ranks 0 but member_count is 229,371. Chicago Ridge ranks 178 and member_count is 77. This column needs more context.*/
+
+-- event
+SELECT 
+    MIN(duration / 60) AS min,
+    MAX(duration / 60) AS max,
+    AVG(duration / 60) AS avg
+FROM
+    event;
+
+/*The average event is 179 mins, this equates to 3 hours. The minimum event is 45mins. The maximum event is 20160 seconds, which equates to 336 hours. This is likely an error.*/
+
+-- category
+SELECT 
+    category_name AS cn, SUM(members) AS members, rating
+FROM
+    category AS cat
+        JOIN
+    grp ON cat.category_id = grp.category_id
+GROUP BY cn
+ORDER BY members
+LIMIT 3;
+
+SELECT 
+    category_name, SUM(members) AS members, rating
+FROM
+    category AS cat
+        JOIN
+    grp ON cat.category_id = grp.category_id
+WHERE
+    rating >= 5
+GROUP BY category_name
+ORDER BY members DESC
+LIMIT 3;
+
+SELECT 
+    category_name AS cn, SUM(members) AS members
+FROM
+    category AS cat
+        JOIN
+    grp ON cat.category_id = grp.category_id
+GROUP BY cn
+ORDER BY members DESC
+LIMIT 3;
+
+/*LetsMeet Members joined Tech, Career & Business and Art & Culture groups the most. These categories have the highest rating of 5. Tech is the most popular category with the most members 56,154 members, followed by Career & Business with 51,249 members and Arts & Culture with 22,292 members. Categories with the least members are Paranormal with 169 members rating of 5, followed by Cars & Motorcycles with 3130 members a rating of 4.85 and Sci-Fi & Fantasy with 9743 members a rating of 4.78. Removing the ratings, Tech and Career & Business are the still the most popular. Tech has a total of 759,649 members and Career & Business has a total of 555,794 member. Followed by Socializing with a total 350,880 members.*/
